@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+.vs/
+.git/
+.agents/
+.codex/
+Dockerfile
+docker-compose.yml

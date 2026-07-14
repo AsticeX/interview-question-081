@@ -1,0 +1,24 @@
+<form class="comment-form" [formGroup]="form" (ngSubmit)="submit()">
+  <input
+    nz-input
+    formControlName="message"
+    placeholder="Write a comment..."
+    aria-label="Write a comment"
+    [disabled]="submitting"
+    (keydown.enter)="submit(); $event.preventDefault()"
+  />
+
+  <button
+    nz-button
+    nzType="primary"
+    type="submit"
+    [disabled]="submitting || form.invalid"
+    [nzLoading]="submitting"
+  >
+    Send
+  </button>
+
+  @if (form.controls.message.touched && form.controls.message.hasError('required')) {
+    <div class="comment-form__error">Comment is required.</div>
+  }
+</form>

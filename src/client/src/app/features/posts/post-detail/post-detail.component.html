@@ -1,0 +1,36 @@
+<main class="page-shell">
+  <nz-card class="post-card" [nzBordered]="false" [nzBodyStyle]="{ padding: '0' }">
+    <header class="post-card__header">IT 08-1</header>
+
+    <nz-spin [nzSpinning]="loading">
+      @if (post) {
+        <section class="post-card__content">
+          <div class="author">
+            <nz-avatar
+              class="author__avatar"
+              [nzSize]="34"
+              [nzSrc]="post.authorAvatarUrl"
+              [nzText]="post.authorName.charAt(0)"
+            />
+
+            <div class="author__text">
+              <strong>{{ post.authorName }}</strong>
+              <time [dateTime]="post.createdAt">
+                {{ post.createdAt | date: 'MMM d, y, HH:mm' }}
+              </time>
+            </div>
+          </div>
+
+          <img class="post-image" [src]="post.imageUrl" alt="Post attachment">
+
+          <app-comment-list [comments]="post.comments" />
+
+          <app-comment-form
+            [submitting]="submitting"
+            (commentSubmit)="addComment($event)"
+          />
+        </section>
+      }
+    </nz-spin>
+  </nz-card>
+</main>

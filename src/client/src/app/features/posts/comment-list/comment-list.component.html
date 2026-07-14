@@ -1,0 +1,24 @@
+@if (comments.length) {
+  <section class="comments" aria-label="Comments">
+    @for (comment of comments; track comment.id) {
+      <article class="comment">
+        <nz-avatar
+          class="comment__avatar"
+          [nzSize]="32"
+          [nzSrc]="comment.authorAvatarUrl"
+          [nzText]="comment.authorName.charAt(0)"
+        />
+
+        <div class="comment__body">
+          <div class="comment__meta">
+            <strong>{{ comment.authorName }}</strong>
+            <span>{{ comment.createdAt | date: 'MMM d, y, HH:mm' }}</span>
+          </div>
+          <p>{{ comment.message }}</p>
+        </div>
+      </article>
+    }
+  </section>
+} @else {
+  <nz-empty nzNotFoundContent="No comments yet" />
+}

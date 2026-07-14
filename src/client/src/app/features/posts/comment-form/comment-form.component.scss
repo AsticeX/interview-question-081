@@ -1,0 +1,44 @@
+.comment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+input {
+  min-height: 34px;
+  border-color: #c9d0d6;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+button {
+  min-width: 64px;
+  height: 34px;
+  border-color: #209f4b;
+  background: #209f4b;
+  font-size: 13px;
+
+  &:hover,
+  &:focus {
+    border-color: #18883e;
+    background: #18883e;
+  }
+}
+
+.comment-form__error {
+  grid-column: 1 / -1;
+  color: #c0342f;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+@media (max-width: 420px) {
+  .comment-form {
+    grid-template-columns: 1fr;
+  }
+
+  button {
+    width: 100%;
+  }
+}
