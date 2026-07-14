@@ -63,14 +63,14 @@ Posts:
 
 - `GET /api/post` - Get all posts
 - `GET /api/post/{id}` - Get one post by id
-- `POST /api/post/create` - Create a post
+- `POST /api/post` - Create a post
 - `DELETE /api/post/{id}` - Delete a post
 
 Comments:
 
 - `GET /api/comment?postId={postId}` - Get comments for a post
 - `GET /api/comment/{id}` - Get one comment by id
-- `POST /api/comment/create` - Create a comment
+- `POST /api/comment` - Create a comment
 - `DELETE /api/comment/{id}` - Delete a comment
 
 Create comment example:
@@ -91,7 +91,7 @@ This lets the page show new comments from other users without a browser refresh.
 
 After sending a comment, the client:
 
-1. Calls `POST /api/comment/create`
+1. Calls `POST /api/comment`
 2. Calls `GET /api/comment?postId=...`
 3. Replaces the comment list with the latest API data
 

@@ -20,7 +20,6 @@ public class PostController : ControllerBase
     }
 
     [HttpGet]
-    [HttpGet("get")]
     public async Task<ActionResult<Response<List<GetPostsResult>>>> Get([FromQuery] GetPostsQuery query)
     {
         return Ok(await _sender.Send(query));
@@ -35,7 +34,6 @@ public class PostController : ControllerBase
     }
 
     [HttpPost]
-    [HttpPost("create")]
     public async Task<ActionResult<Response<List<CreatePostResult>>>> Create([FromBody] CreatePostCommand command)
     {
         var response = await _sender.Send(command);

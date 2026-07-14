@@ -58,7 +58,7 @@ export class PostService {
 
   addComment(postId: number, message: string): Observable<Comment[]> {
     return this.http
-      .post<ApiResponse<ApiComment[]>>(`${this.apiBaseUrl}/api/comment/create`, {
+      .post<ApiResponse<ApiComment[]>>(`${this.apiBaseUrl}/api/comment`, {
         postId,
         commentBy: 'Blend 285',
         message

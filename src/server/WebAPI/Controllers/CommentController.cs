@@ -20,7 +20,6 @@ public class CommentController : ControllerBase
     }
 
     [HttpGet]
-    [HttpGet("get")]
     public async Task<ActionResult<Response<List<GetCommentsResult>>>> Get([FromQuery] GetCommentsQuery query)
     {
         return Ok(await _sender.Send(query));
@@ -35,7 +34,6 @@ public class CommentController : ControllerBase
     }
 
     [HttpPost]
-    [HttpPost("create")]
     public async Task<ActionResult<Response<List<CreateCommentResult>>>> Create([FromBody] CreateCommentCommand command)
     {
         var result = await _sender.Send(command);
