@@ -1,11 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
-import { finalize } from 'rxjs';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Subscription, forkJoin, finalize, interval, switchMap } from 'rxjs';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 
-import { Comment } from '../../../core/models/comment.model';
 import { Post } from '../../../core/models/post.model';
 import { PostService } from '../../../core/services/post.service';
 import { CommentFormComponent } from '../comment-form/comment-form.component';
@@ -25,39 +24,71 @@ import { CommentListComponent } from '../comment-list/comment-list.component';
   templateUrl: './post-detail.component.html',
   styleUrl: './post-detail.component.scss'
 })
-export class PostDetailComponent implements OnInit {
+export class PostDetailComponent implements OnInit, OnDestroy {
   private readonly postService = inject(PostService);
+  private commentRefreshSubscription?: Subscription;
+  private readonly commentRefreshMs = 5000;
 
-  post: Post | null = null;
+  posts: Post[] = [];
   loading = true;
-  submitting = false;
+  submittingPostIds = new Set<number>();
 
   ngOnInit(): void {
     this.postService
-      .getPost()
+      .getPosts()
       .pipe(finalize(() => (this.loading = false)))
-      .subscribe((post) => {
-        this.post = post;
+      .subscribe((posts) => {
+        this.posts = posts;
+        this.startCommentRefresh();
       });
   }
 
-  addComment(message: string): void {
-    const currentPost = this.post;
+  ngOnDestroy(): void {
+    this.commentRefreshSubscription?.unsubscribe();
+  }
 
-    if (!currentPost) {
+  addComment(post: Post, message: string): void {
+    this.submittingPostIds = new Set(this.submittingPostIds).add(post.id);
+
+    this.postService
+      .addComment(post.id, message)
+      .pipe(
+        finalize(() => {
+          const nextSubmittingPostIds = new Set(this.submittingPostIds);
+          nextSubmittingPostIds.delete(post.id);
+          this.submittingPostIds = nextSubmittingPostIds;
+        })
+      )
+      .subscribe((comments) => {
+        this.posts = this.posts.map((currentPost) =>
+          currentPost.id === post.id
+            ? {
+                ...currentPost,
+                comments
+              }
+            : currentPost
+        );
+      });
+  }
+
+  isSubmitting(postId: number): boolean {
+    return this.submittingPostIds.has(postId);
+  }
+
+  private startCommentRefresh(): void {
+    this.commentRefreshSubscription?.unsubscribe();
+
+    if (this.posts.length === 0) {
       return;
     }
 
-    this.submitting = true;
-
-    this.postService
-      .addComment(message)
-      .pipe(finalize(() => (this.submitting = false)))
-      .subscribe((comment: Comment) => {
-        this.post = {
-          ...currentPost,
-          comments: [...currentPost.comments, comment]
-        };
+    this.commentRefreshSubscription = interval(this.commentRefreshMs)
+      .pipe(switchMap(() => forkJoin(this.posts.map((post) => this.postService.getComments(post.id)))))
+      .subscribe((commentsByPostIndex) => {
+        this.posts = this.posts.map((post, index) => ({
+          ...post,
+          comments: commentsByPostIndex[index] ?? post.comments
+        }));
       });
   }
 }

@@ -1,4 +1,5 @@
 using Application;
+using Domain.Entities;
 using HealthChecks.UI.Client;
 using Infrastructure;
 using Infrastructure.Persistence;
@@ -18,6 +19,16 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(configuration);
 builder.Services.AddWebAPIServices();
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ClientApp", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
  
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -45,7 +56,14 @@ app.UseHealthChecks("/health", new HealthCheckOptions
 
 app.UseExceptionHandler(opt => { });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseRouting();
+
+app.UseCors("ClientApp");
 
 app.UseAuthorization();
 
@@ -64,6 +82,7 @@ static async Task ApplyMigrationsAsync(WebApplication app)
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await dbContext.Database.MigrateAsync();
+            await SeedDefaultPostAsync(dbContext);
             return;
         }
         catch when (attempt < maxAttempts)
@@ -71,4 +90,22 @@ static async Task ApplyMigrationsAsync(WebApplication app)
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
     }
+}
+
+static async Task SeedDefaultPostAsync(ApplicationDbContext dbContext)
+{
+    if (await dbContext.Posts.AnyAsync())
+    {
+        return;
+    }
+
+    dbContext.Posts.Add(new Post
+    {
+        Title = "IT 08-1",
+        CreatedBy = "Change can",
+        CreatedAt = new DateTime(2026, 7, 14, 9, 42, 0),
+        ImageUrl = "https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?auto=format&fit=crop&w=1100&q=80"
+    });
+
+    await dbContext.SaveChangesAsync();
 }

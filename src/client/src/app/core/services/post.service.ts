@@ -1,61 +1,98 @@
 import { Injectable } from '@angular/core';
-import { Observable, delay, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { Comment } from '../models/comment.model';
 import { Post } from '../models/post.model';
+import { environment } from '../../../environments/environment';
+
+interface ApiResponse<T> {
+  succeeded: boolean;
+  message?: string;
+  data: T;
+}
+
+interface ApiComment {
+  id: number;
+  postId: number;
+  commentBy: string;
+  message: string;
+  createdAt: string;
+}
+
+interface ApiPost {
+  id: number;
+  title: string;
+  imageUrl: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PostService {
-  private readonly mockPost: Post = {
-    id: 1,
-    title: 'IT 08-1',
-    authorName: 'Chang-noi',
-    authorAvatarUrl: 'https://i.pravatar.cc/80?img=12',
-    createdAt: '2026-07-14T09:42:00+07:00',
-    imageUrl:
-      'https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?auto=format&fit=crop&w=1100&q=80',
-    comments: [
-      {
-        id: 1,
-        authorName: 'dfasdf 365',
-        authorAvatarUrl: 'https://i.pravatar.cc/80?img=5',
-        message: 'Comment',
-        createdAt: '2026-07-14T10:03:00+07:00'
-      },
-      {
-        id: 2,
-        authorName: 'dfasdf 365',
-        authorAvatarUrl: 'https://i.pravatar.cc/80?img=8',
-        message: 'Test again day',
-        createdAt: '2026-07-14T10:15:00+07:00'
-      }
-    ]
-  };
+  private readonly apiBaseUrl = environment.apiBaseUrl;
 
-  getPost(): Observable<Post> {
-    return of(this.clonePost()).pipe(delay(350));
+  constructor(private readonly http: HttpClient) {}
+
+  getPosts(): Observable<Post[]> {
+    return this.http
+      .get<ApiResponse<ApiPost[]>>(`${this.apiBaseUrl}/api/post`)
+      .pipe(
+        switchMap((response) => {
+          const posts = response.data ?? [];
+
+          if (posts.length === 0) {
+            return of([]);
+          }
+
+          return forkJoin(
+            posts.map((post) =>
+              this.getComments(post.id).pipe(map((comments) => this.mapPost(post, comments)))
+            )
+          );
+        })
+      );
   }
 
-  addComment(message: string): Observable<Comment> {
-    const comment: Comment = {
-      id: Date.now(),
-      authorName: 'Current User',
-      authorAvatarUrl: 'https://i.pravatar.cc/80?img=20',
-      message,
-      createdAt: new Date().toISOString()
-    };
-
-    this.mockPost.comments = [...this.mockPost.comments, comment];
-
-    return of(comment).pipe(delay(300));
+  addComment(postId: number, message: string): Observable<Comment[]> {
+    return this.http
+      .post<ApiResponse<ApiComment[]>>(`${this.apiBaseUrl}/api/comment/create`, {
+        postId,
+        commentBy: 'Blend 285',
+        message
+      })
+      .pipe(switchMap(() => this.getComments(postId)));
   }
 
-  private clonePost(): Post {
+  getComments(postId: number): Observable<Comment[]> {
+    return this.http
+      .get<ApiResponse<ApiComment[]>>(`${this.apiBaseUrl}/api/comment`, {
+        params: { postId }
+      })
+      .pipe(map((response) => (response.data ?? []).map((comment) => this.mapComment(comment))));
+  }
+
+  private mapPost(post: ApiPost, comments: Comment[] = []): Post {
     return {
-      ...this.mockPost,
-      comments: this.mockPost.comments.map((comment) => ({ ...comment }))
+      id: post.id,
+      title: post.title,
+      authorName: post.createdBy ?? '',
+      authorAvatarUrl: '',
+      createdAt: post.createdAt,
+      imageUrl: post.imageUrl ?? '',
+      comments
+    };
+  }
+
+  private mapComment(comment: ApiComment): Comment {
+    return {
+      id: comment.id,
+      authorName: comment.commentBy,
+      authorAvatarUrl: '',
+      message: comment.message,
+      createdAt: comment.createdAt
     };
   }
 }

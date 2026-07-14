@@ -1,9 +1,10 @@
 <main class="page-shell">
-  <nz-card class="post-card" [nzBordered]="false" [nzBodyStyle]="{ padding: '0' }">
-    <header class="post-card__header">IT 08-1</header>
+  <header class="page-shell__header">IT 08-1</header>
 
-    <nz-spin [nzSpinning]="loading">
-      @if (post) {
+  <nz-spin [nzSpinning]="loading">
+    <section class="post-feed">
+      @for (post of posts; track post.id) {
+        <nz-card class="post-card" [nzBordered]="false" [nzBodyStyle]="{ padding: '0' }">
         <section class="post-card__content">
           <div class="author">
             <nz-avatar
@@ -26,11 +27,16 @@
           <app-comment-list [comments]="post.comments" />
 
           <app-comment-form
-            [submitting]="submitting"
-            (commentSubmit)="addComment($event)"
+            [submitting]="isSubmitting(post.id)"
+            (commentSubmit)="addComment(post, $event)"
           />
         </section>
+        </nz-card>
+      } @empty {
+        @if (!loading) {
+          <p class="empty-posts">No posts yet.</p>
+        }
       }
-    </nz-spin>
-  </nz-card>
+    </section>
+  </nz-spin>
 </main>
